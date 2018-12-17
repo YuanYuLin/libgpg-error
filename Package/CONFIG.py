@@ -28,9 +28,9 @@ def set_global(args):
     global dst_usr_bin_dir
     global src_usr_sbin_dir
     global dst_usr_sbin_dir
-    global base_include_dir
     global src_include_dir
     global dst_include_dir
+    global tmp_include_dir
     pkg_path = args["pkg_path"]
     output_dir = args["output_path"]
     arch = ops.getEnv("ARCH_ALT")
@@ -53,8 +53,10 @@ def set_global(args):
     src_usr_sbin_dir = iopc.getBaseRootFile("usr/sbin")
     dst_usr_sbin_dir = ops.path_join(output_dir, "usr/sbin")
 
-    base_include_dir = iopc.getBaseRootFile("usr/include")
-    src_include_dir = ops.path_join(output_dir, "include")
+    #base_include_dir = iopc.getBaseRootFile("usr/include")
+    #src_include_dir = ops.path_join(output_dir, "include")
+    src_include_dir = iopc.getBaseRootFile("usr/include")
+    tmp_include_dir = ops.path_join(output_dir, ops.path_join("include",args["pkg_name"]))
     dst_include_dir = ops.path_join("include",args["pkg_name"])
 
 def MAIN_ENV(args):
@@ -72,8 +74,8 @@ def MAIN_EXTRACT(args):
     ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so.0")
     ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so")
 
-    ops.mkdir(src_include_dir)
-    #ops.copyto(ops.path_join(base_include_dir, "microhttpd.h"), src_include_dir)
+    ops.mkdir(tmp_include_dir)
+    ops.copyto(ops.path_join(src_include_dir, 'x86_64-linux-gnu/gpg-error.h'), tmp_include_dir)
     return False
 
 def MAIN_PATCH(args, patch_group_name):
@@ -97,8 +99,21 @@ def MAIN_BUILD(args):
 def MAIN_INSTALL(args):
     set_global(args)
 
-    iopc.installBin(args["pkg_name"], ops.path_join(output_dir, "include/."), dst_include_dir)
+    iopc.installBin(args["pkg_name"], ops.path_join(tmp_include_dir, "."), dst_include_dir)
     iopc.installBin(args["pkg_name"], ops.path_join(dst_lib_dir, "."), "lib") 
+    return False
+
+def MAIN_SDKENV(args):
+    set_global(args)
+
+    cflags = ""
+    cflags += " -I" + ops.path_join(iopc.getSdkPath(), 'usr/include/' + args["pkg_name"])
+    iopc.add_includes(cflags)
+
+    libs = ""
+    libs += " -lgpg-error"
+    iopc.add_libs(libs)
+
     return False
 
 def MAIN_CLEAN_BUILD(args):
