@@ -66,16 +66,23 @@ def MAIN_ENV(args):
 def MAIN_EXTRACT(args):
     set_global(args)
 
-    libgpg_error_so = "libgpg-error.so.0.21.0"
-
     ops.mkdir(dst_lib_dir)
+
+    libgpg_error_so = "libgpg-error.so.0.13.0"
+
     ops.copyto(ops.path_join(src_lib_dir, libgpg_error_so), dst_lib_dir)
-    ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so.0.21")
+    ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so.0.13")
     ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so.0")
     ops.ln(dst_lib_dir, libgpg_error_so, "libgpg-error.so")
 
     ops.mkdir(tmp_include_dir)
-    ops.copyto(ops.path_join(src_include_dir, 'x86_64-linux-gnu/gpg-error.h'), tmp_include_dir)
+    if ops.isExist(ops.path_join(src_include_dir, 'x86_64-linux-gnu/gpg-error.h')) :
+        ops.copyto(ops.path_join(src_include_dir, 'x86_64-linux-gnu/gpg-error.h'), tmp_include_dir)
+    elif ops.isExist(ops.path_join(src_include_dir, 'arm-linux-gnueabi/gpg-error.h')) :
+        ops.copyto(ops.path_join(src_include_dir, 'arm-linux-gnueabi/gpg-error.h'), tmp_include_dir)
+    else :
+        print "Not Found gpg-error.h..."
+        exit(1)
     return False
 
 def MAIN_PATCH(args, patch_group_name):
